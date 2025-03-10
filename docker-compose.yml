@@ -7,7 +7,9 @@ services:
   #    GRIDAPPSD_USER: system
   #    GRIDAPPSD_PASS: manager
     depends_on:
-      - gridappsd 
+      - gridappsd
+      # gridappsd:
+      #   condition: service_healthy
     #volumes:
       # Change upto the : where you have your git repository on your
       # computer.  The : delinates between the host (your computer) and
@@ -42,6 +44,7 @@ services:
   mysql:
     image: mysql/mysql-server:5.7
     container_name: mysql
+    user: root
     ports:
       - 3306:3306
 
@@ -50,7 +53,7 @@ services:
       MYSQL_PORT: 3306
 
     volumes:
-      - ./gridappsd/mysql:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
       - ./dumps/gridappsd_mysql_dump.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
   viz:
@@ -76,6 +79,11 @@ services:
       - 8000:8000
       # Add debugging to your application via the following port
       - 8888:8888
+    # healthcheck:
+    #   test: ["CMD", "nc", "-zv", "localhost", "61613"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
 
     working_dir: /gridappsd
     environment:
@@ -88,6 +96,7 @@ services:
       # Debugging is only necessary if you intend to remote debug the GridAPPS-D process iself.
       # Turning this on will allow the user to remote debug the gridappsd server on port 8000.
       - DEBUG=1
+      - LOG_LEVEL=DEBUG  # Set log level to DEBUG
     # volumes:
       # X11 application support--share X11 port with container host
       # - /tmp/.X11-unix:/tmp/.X11-unix
@@ -147,3 +156,8 @@ services:
     ports:
       - 8086:8086
 
+networks:
+  gridappsd-network:
+
+volumes:
+  mysql-data:
